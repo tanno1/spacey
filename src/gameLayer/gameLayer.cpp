@@ -24,6 +24,7 @@ gl2d::Renderer2D renderer;
 constexpr int BACKGROUNDS = 4;
 
 gl2d::Texture spaceShipTexture;
+gl2d::TextureAtlasPadding spaceShipAtlas;
 
 gl2d::Texture backgroundTexture[BACKGROUNDS];
 TiledRenderer tiledRenderer[BACKGROUNDS];
@@ -34,7 +35,9 @@ bool initGame()
 	gl2d::init();
 	renderer.create();
 
-	spaceShipTexture.loadFromFile(RESOURCES_PATH "spaceship/ships/green.png", true);
+	spaceShipTexture.loadFromFileWithPixelPadding(RESOURCES_PATH "spaceship/stitchedFiles/spaceships.png", 128, true);
+	spaceShipAtlas = gl2d::TextureAtlasPadding(5, 2, spaceShipTexture.GetSize().x, spaceShipTexture.GetSize().y);
+
 	backgroundTexture[0].loadFromFile(RESOURCES_PATH "background1.png", true);
 	backgroundTexture[1].loadFromFile(RESOURCES_PATH "background2.png", true);
 	backgroundTexture[2].loadFromFile(RESOURCES_PATH "background3.png", true);
@@ -108,12 +111,19 @@ bool gameLogic(float deltaTime)
 	}
 #pragma endregion
 
+#pragma region follow
+	
+	renderer.currentCamera.follow(data.playerPos, deltaTime * 200, 10, 200, w, h);
+
+#pragma endregion
+
 #pragma region render background
 
 	for (int i = 0; i < BACKGROUNDS; i++)
 	{
 		tiledRenderer[i].render(renderer);
 	}
+#pragma endregion
 
 #pragma region mouse pos
 
@@ -135,12 +145,13 @@ bool gameLogic(float deltaTime)
 
 #pragma endregion
 
+#pragma region render ship
+
+	constexpr float shipSize = 50.f;
+
+	renderer.renderRectangle({ data.playerPos - glm::vec2(shipSize/2, shipSize/2), shipSize, shipSize}, spaceShipTexture, Colors_White, {}, glm::degrees(spaceShipAngle) + 90, spaceShipAtlas.get(1, 0));
 
 #pragma endregion
-
-	renderer.currentCamera.follow(data.playerPos, deltaTime * 200, 10, 200, w, h);
-
-	renderer.renderRectangle({ data.playerPos, 50, 50 }, spaceShipTexture, Colors_White, {}, glm::degrees(spaceShipAngle) + 90 );
 
 	renderer.flush(); // tell gpu compute everything
 	
