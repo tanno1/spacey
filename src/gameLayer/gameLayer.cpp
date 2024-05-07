@@ -11,10 +11,14 @@
 #include <gl2d/gl2d.h>
 #include <platformTools.h>
 #include <tiledRenderer.h>
+#include <bullet.h>
+#include <vector>
 
 struct GameplayData
 {
 	glm::vec2 playerPos = { 100, 100 };
+
+	std::vector<Bullet> bullets;
 };
 
 GameplayData data;
@@ -25,6 +29,9 @@ constexpr int BACKGROUNDS = 4;
 
 gl2d::Texture spaceShipTexture;
 gl2d::TextureAtlasPadding spaceShipAtlas;
+
+gl2d::Texture bulletsTexture;
+gl2d::TextureAtlasPadding bulletsAtlas;
 
 gl2d::Texture backgroundTexture[BACKGROUNDS];
 TiledRenderer tiledRenderer[BACKGROUNDS];
@@ -37,6 +44,9 @@ bool initGame()
 
 	spaceShipTexture.loadFromFileWithPixelPadding(RESOURCES_PATH "spaceship/stitchedFiles/spaceships.png", 128, true);
 	spaceShipAtlas = gl2d::TextureAtlasPadding(5, 2, spaceShipTexture.GetSize().x, spaceShipTexture.GetSize().y);
+
+	bulletsTexture.loadFromFileWithPixelPadding(RESOURCES_PATH "spaceship/stitchedFiles/projectiles.png", 500, true);
+	bulletsAtlas = gl2d::TextureAtlasPadding(3, 2, bulletsTexture.GetSize().x, bulletsTexture.GetSize().y);
 
 	backgroundTexture[0].loadFromFile(RESOURCES_PATH "background1.png", true);
 	backgroundTexture[1].loadFromFile(RESOURCES_PATH "background2.png", true);
@@ -113,7 +123,7 @@ bool gameLogic(float deltaTime)
 
 #pragma region follow
 	
-	renderer.currentCamera.follow(data.playerPos, deltaTime * 200, 10, 200, w, h);
+	renderer.currentCamera.follow(data.playerPos, deltaTime * 300, 10, 200, w, h);
 
 #pragma endregion
 
@@ -145,6 +155,24 @@ bool gameLogic(float deltaTime)
 
 #pragma endregion
 
+#pragma region handle bullets
+
+	if (platform::isLMousePressed())
+	{
+		Bullet b;
+		b.position = data.playerPos;
+		b.fireDirection = mouseDirection;
+
+		data.bullets.push_back(b);
+	}
+
+	for (auto& b : data.bullets)
+	{
+		b.update(deltaTime);
+	}
+
+#pragma endregion
+
 #pragma region render ship
 
 	constexpr float shipSize = 50.f;
@@ -152,6 +180,16 @@ bool gameLogic(float deltaTime)
 	renderer.renderRectangle({ data.playerPos - glm::vec2(shipSize/2, shipSize/2), shipSize, shipSize}, spaceShipTexture, Colors_White, {}, glm::degrees(spaceShipAngle) + 90, spaceShipAtlas.get(1, 0));
 
 #pragma endregion
+
+#pragma region render bullets
+
+	for (auto& b : data.bullets)
+	{
+		b.render(renderer, bulletsTexture, bulletsAtlas);
+	}
+
+#pragma endregion
+
 
 	renderer.flush(); // tell gpu compute everything
 	
