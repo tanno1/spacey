@@ -118,7 +118,7 @@ bool gameLogic(float deltaTime)
 	if (move.x != 0 || move.y != 0)
 	{
 		move = glm::normalize(move);
-		move *= deltaTime * 300; // speed
+		move *= deltaTime * 500; // speed
 		data.playerPos += move;
 		// std::cout << "X, Y:" << move.x << move.y << std::endl;
 	}
@@ -188,7 +188,7 @@ bool gameLogic(float deltaTime)
 
 	for (int i = 0; i < data.enemies.size(); i++)
 	{
-		// to do update enemies
+		data.enemies[i].update(deltaTime, data.playerPos);
 	}
 
 #pragma endregion
@@ -227,11 +227,25 @@ bool gameLogic(float deltaTime)
 	renderer.flush(); // tell gpu compute everything
 	
 	//ImGui::ShowDemoWindow();
-	/*ImGui::Begin("debug");
+	ImGui::Begin("debug");
 
 	ImGui::Text("Bullets Count: %d", (int)data.bullets.size());
+	ImGui::Text("Enemies Count: %d", (int)data.enemies.size());
 
-	ImGui::End();*/
+	if (ImGui::Button("Spawn Enemy"))
+	{
+		glm::uvec2 shipTypes[] = { {0, 0}, {0, 1}, {2, 0}, {3, 1} };
+
+		Enemy e;
+		e.position = data.playerPos;
+
+		e.speed = 350 + rand() % 100;
+		e.turnSpeed = 2.f + (rand() % 1000) / 500.f;
+		e.type = shipTypes[rand() % 4];
+		data.enemies.push_back(e);
+	}
+
+	ImGui::End();
 
 	return true;
 #pragma endregion
