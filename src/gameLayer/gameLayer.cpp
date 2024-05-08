@@ -166,9 +166,17 @@ bool gameLogic(float deltaTime)
 		data.bullets.push_back(b);
 	}
 
-	for (auto& b : data.bullets)
+	for (int i = 0; i < data.bullets.size(); i++)
 	{
-		b.update(deltaTime);
+		if (glm::distance(data.bullets[i].position, data.playerPos) > 5'000)
+		{
+			data.bullets.erase(data.bullets.begin() + i);
+			i--;
+			continue;
+		}
+
+		data.bullets[i].update(deltaTime);
+
 	}
 
 #pragma endregion
@@ -194,6 +202,11 @@ bool gameLogic(float deltaTime)
 	renderer.flush(); // tell gpu compute everything
 	
 	//ImGui::ShowDemoWindow();
+	/*ImGui::Begin("debug");
+
+	ImGui::Text("Bullets Count: %d", (int)data.bullets.size());
+
+	ImGui::End();*/
 
 	return true;
 #pragma endregion
