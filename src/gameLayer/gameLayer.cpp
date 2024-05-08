@@ -39,6 +39,12 @@ gl2d::TextureAtlasPadding bulletsAtlas;
 gl2d::Texture backgroundTexture[BACKGROUNDS];
 TiledRenderer tiledRenderer[BACKGROUNDS];
 
+void restartGame()
+{
+	data = {};
+	renderer.currentCamera.follow(data.playerPos, 550, 0, 0, renderer.windowW, renderer.windowH);
+}
+
 bool initGame()
 {
 	//initializing stuff for the renderer
@@ -64,6 +70,8 @@ bool initGame()
 	tiledRenderer[0].paralaxStrength = 0;
 	tiledRenderer[1].paralaxStrength = .5;
 	tiledRenderer[2].paralaxStrength = .7;
+
+	restartGame();
 
 	return true;
 }
@@ -260,6 +268,11 @@ bool gameLogic(float deltaTime)
 		e.fireRange = 1.5 + (rand() % 1000) / 2000.f;
 		e.fireTimeReset = 0.1 + (rand() % 1000) / 500;
 		data.enemies.push_back(e);
+	}
+
+	if (ImGui::Button("Reset Game"))
+	{
+		restartGame();
 	}
 
 	ImGui::End();
