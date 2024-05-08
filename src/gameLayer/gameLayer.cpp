@@ -195,7 +195,14 @@ bool gameLogic(float deltaTime)
 			continue;
 		}
 
-		data.enemies[i].update(deltaTime, data.playerPos);
+		if (data.enemies[i].update(deltaTime, data.playerPos))
+		{
+			Bullet b;
+			b.position = data.enemies[i].position;
+			b.fireDirection = data.enemies[i].viewDirection;
+			// todo speed
+			data.bullets.push_back(b);
+		}
 
 	}
 
@@ -250,6 +257,8 @@ bool gameLogic(float deltaTime)
 		e.speed = 350 + rand() % 100;
 		e.turnSpeed = 2.f + (rand() % 1000) / 500.f;
 		e.type = shipTypes[rand() % 4];
+		e.fireRange = 1.5 + (rand() % 1000) / 2000.f;
+		e.fireTimeReset = 0.1 + (rand() % 1000) / 500;
 		data.enemies.push_back(e);
 	}
 

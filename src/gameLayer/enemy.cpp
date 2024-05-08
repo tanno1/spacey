@@ -6,23 +6,32 @@ void Enemy::render(gl2d::Renderer2D& renderer, gl2d::Texture& sprites, gl2d::Tex
 	renderSpaceShip(renderer, position, enemyShipSize, sprites, atlas.get(type.x, type.y), viewDirection);
 }
 
-void Enemy::update(float deltaTime, glm::vec2 playerPos)
+bool Enemy::update(float deltaTime, glm::vec2 playerPos)
 {
-	// calculate direciton to player
+	// direction stuff
 	glm::vec2 directionToPlayer = playerPos - position;
-
-	// if enemy is on player, change direction
 	if (glm::length(directionToPlayer) == 0)
-	{
-		directionToPlayer = { 1, 0 };
-	}
+	{ directionToPlayer = { 1, 0 }; }
 	else
-	{
-		directionToPlayer = glm::normalize(directionToPlayer);
-	};
-
-	// init new direction vector
+	{ directionToPlayer = glm::normalize(directionToPlayer); };
 	glm::vec2 newDirection = {};
+
+	bool shoot = (glm::length(directionToPlayer + viewDirection) >= fireRange);
+
+	if (shoot)
+	{
+		if (firedTime <= 0.f)
+		{
+			firedTime = fireTimeReset;
+		}
+		else
+		{
+			shoot = 0;
+		}
+	}
+
+	firedTime -= deltaTime;
+	if (firedTime < 0) { firedTime = 0.f; };
 	
 	// if enemy is on player
 	if (glm::length(directionToPlayer + viewDirection) <= 0.2)
@@ -46,5 +55,7 @@ void Enemy::update(float deltaTime, glm::vec2 playerPos)
 
 	length = glm::clamp(length, 0.1f, 3.f);
 	position += viewDirection * deltaTime * speed;
+
+	return shoot;
 
 }
