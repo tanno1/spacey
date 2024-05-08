@@ -13,12 +13,15 @@
 #include <tiledRenderer.h>
 #include <bullet.h>
 #include <vector>
+#include <enemy.h>>
 
 struct GameplayData
 {
 	glm::vec2 playerPos = { 100, 100 };
 
 	std::vector<Bullet> bullets;
+
+	std::vector<Enemy> enemies;
 };
 
 GameplayData data;
@@ -181,11 +184,33 @@ bool gameLogic(float deltaTime)
 
 #pragma endregion
 
+#pragma region handle enemies
+
+	for (int i = 0; i < data.enemies.size(); i++)
+	{
+		// to do update enemies
+	}
+
+#pragma endregion
+
+#pragma region render enemies
+
+	for (auto& e : data.enemies)
+	{
+		e.render(renderer, spaceShipTexture, spaceShipAtlas);
+	}
+
+#pragma endregion
+
+
+
 #pragma region render ship
 
 	constexpr float shipSize = 50.f;
 
-	renderer.renderRectangle({ data.playerPos - glm::vec2(shipSize/2, shipSize/2), shipSize, shipSize}, spaceShipTexture, Colors_White, {}, glm::degrees(spaceShipAngle) + 90, spaceShipAtlas.get(1, 0));
+	renderSpaceShip(renderer, data.playerPos, shipSize, spaceShipTexture, spaceShipAtlas.get(3, 0), mouseDirection);
+
+	/*renderer.renderRectangle({ data.playerPos - glm::vec2(shipSize/2, shipSize/2), shipSize, shipSize}, spaceShipTexture, Colors_White, {}, glm::degrees(spaceShipAngle) + 90, spaceShipAtlas.get(1, 0));*/
 
 #pragma endregion
 
