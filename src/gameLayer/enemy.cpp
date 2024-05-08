@@ -25,16 +25,26 @@ void Enemy::update(float deltaTime, glm::vec2 playerPos)
 	glm::vec2 newDirection = {};
 	
 	// if enemy is on player
-	if (glm::length(directionToPlayer + viewDirection) <= 0.1)
+	if (glm::length(directionToPlayer + viewDirection) <= 0.2)
 	{
-		newDirection = glm::vec2(directionToPlayer.y, -directionToPlayer.x);
+			if (rand() % 2)
+			{
+				newDirection = glm::vec2(directionToPlayer.y, -directionToPlayer.x);
+			}
+			else
+			{
+				newDirection = glm::vec2(-directionToPlayer.y, directionToPlayer.x);
+			}
 	}
 	else
 	{
 		newDirection = deltaTime * turnSpeed * directionToPlayer + viewDirection;
 	}
 
+	float length = glm::length(newDirection);
 	viewDirection = glm::normalize(newDirection);
+
+	length = glm::clamp(length, 0.1f, 3.f);
 	position += viewDirection * deltaTime * speed;
 
 }

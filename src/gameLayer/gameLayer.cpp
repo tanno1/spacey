@@ -188,7 +188,15 @@ bool gameLogic(float deltaTime)
 
 	for (int i = 0; i < data.enemies.size(); i++)
 	{
+		if (glm::distance(data.playerPos, data.enemies[i].position) > 4000.f)
+		{
+			data.enemies.erase(data.enemies.begin() + i);
+			i--;
+			continue;
+		}
+
 		data.enemies[i].update(deltaTime, data.playerPos);
+
 	}
 
 #pragma endregion
