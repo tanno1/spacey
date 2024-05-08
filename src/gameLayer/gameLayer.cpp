@@ -13,7 +13,8 @@
 #include <tiledRenderer.h>
 #include <bullet.h>
 #include <vector>
-#include <enemy.h>>
+#include <enemy.h>
+#include <glui/glui.h>
 
 struct GameplayData
 {
@@ -22,6 +23,8 @@ struct GameplayData
 	std::vector<Bullet> bullets;
 
 	std::vector<Enemy> enemies;
+
+	float health = 1.f; // player health points 0 -> 1
 };
 
 GameplayData data;
@@ -35,6 +38,9 @@ gl2d::TextureAtlasPadding spaceShipAtlas;
 
 gl2d::Texture bulletsTexture;
 gl2d::TextureAtlasPadding bulletsAtlas;
+
+gl2d::Texture healthBar;
+gl2d::Texture health;
 
 gl2d::Texture backgroundTexture[BACKGROUNDS];
 TiledRenderer tiledRenderer[BACKGROUNDS];
@@ -56,6 +62,9 @@ bool initGame()
 
 	bulletsTexture.loadFromFileWithPixelPadding(RESOURCES_PATH "spaceship/stitchedFiles/projectiles.png", 500, true);
 	bulletsAtlas = gl2d::TextureAtlasPadding(3, 2, bulletsTexture.GetSize().x, bulletsTexture.GetSize().y);
+
+	healthBar.loadFromFile(RESOURCES_PATH "healthBar.png", true);
+	health.loadFromFile(RESOURCES_PATH "health.png", true);
 
 	backgroundTexture[0].loadFromFile(RESOURCES_PATH "background1.png", true);
 	backgroundTexture[1].loadFromFile(RESOURCES_PATH "background2.png", true);
@@ -134,7 +143,7 @@ bool gameLogic(float deltaTime)
 
 #pragma region follow
 	
-	renderer.currentCamera.follow(data.playerPos, deltaTime * 300, 10, 200, w, h);
+	renderer.currentCamera.follow(data.playerPos, deltaTime * 500, 10, 200, w, h);
 
 #pragma endregion
 
@@ -225,8 +234,6 @@ bool gameLogic(float deltaTime)
 
 #pragma endregion
 
-
-
 #pragma region render ship
 
 	constexpr float shipSize = 50.f;
@@ -245,6 +252,29 @@ bool gameLogic(float deltaTime)
 	}
 
 #pragma endregion
+
+#pragma region ui
+
+	renderer.pushCamera();
+	{
+		glui::Frame f({ 0, 0, w, h });
+
+		glui::Box healthBox = glui::Box().xLeftPerc(.65).yTopPerc(0.1).xDimensionPercentage(0.3).yAspectRatio(1.f / 8.f);
+
+		renderer.renderRectangle(healthBox, healthBar);
+
+		glm::vec4 newRect = healthBox();
+		newRect.z *= data.health;
+
+		glm::vec4 textCoords{ 0, 1, 1, 0 };
+		textCoords.z *= data.health;
+
+		renderer.renderRectangle(newRect, health, Colors_White, {}, {}, textCoords);
+	}
+	renderer.popCamera();
+
+#pragma endregion
+
 
 
 	renderer.flush(); // tell gpu compute everything
@@ -274,6 +304,8 @@ bool gameLogic(float deltaTime)
 	{
 		restartGame();
 	}
+
+	if (ImGui::SliderFloat("Player Health", &data.health, 0, 1));
 
 	ImGui::End();
 
