@@ -45,6 +45,11 @@ gl2d::Texture health;
 gl2d::Texture backgroundTexture[BACKGROUNDS];
 TiledRenderer tiledRenderer[BACKGROUNDS];
 
+bool intersectBullet(glm::vec2 bulletPos, glm::vec2 shipPos, float shipSize)
+{
+	return glm::distance(bulletPos, shipPos) <= shipSize;
+}
+
 void restartGame()
 {
 	data = {};
@@ -195,6 +200,18 @@ bool gameLogic(float deltaTime)
 			continue;
 		}
 
+		if (!data.bullets[i].isEnemy)
+		{
+			for (int e = 0; e < data.enemies.size(); e++)
+			{
+				if (intersectBullet(data.bullets[i].position, data.enemies[e].position, enemyShipSize))
+				{
+					data.enemies.erase(data.enemies.begin() + e);
+						break;
+				}
+			}
+		}
+
 		data.bullets[i].update(deltaTime);
 
 	}
@@ -217,6 +234,7 @@ bool gameLogic(float deltaTime)
 			Bullet b;
 			b.position = data.enemies[i].position;
 			b.fireDirection = data.enemies[i].viewDirection;
+			b.isEnemy = true;
 			// todo speed
 			data.bullets.push_back(b);
 		}
