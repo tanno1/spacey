@@ -13,6 +13,8 @@ struct Enemy
 	float fireRange = 1.5f;
 	float firedTime = 1.f;
 	float fireTimeReset = 0.1f;
+	float bulletSpeed = 3000;
+	float life = 1.f;
 
 	void render(gl2d::Renderer2D& renderer, gl2d::Texture& sprites, gl2d::TextureAtlasPadding& atlas);
 

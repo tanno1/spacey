@@ -11,5 +11,6 @@ struct Bullet
 	void update(float deltaTime);
 
 	bool isEnemy = 0;
+	float speed = 3000;
 
 };

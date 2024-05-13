@@ -24,8 +24,12 @@ struct GameplayData
 
 	std::vector<Enemy> enemies;
 
-	float health = 1.f; // player health points 0 -> 1
+	float health = 1.f;
+
+	float spawnEnemyTimerSeconds = 3;
 };
+
+constexpr float shipSize = 50.f;
 
 GameplayData data;
 
@@ -88,6 +92,26 @@ bool initGame()
 	restartGame();
 
 	return true;
+}
+
+void spawnEnemy()
+{
+	glm::uvec2 shipTypes[] = { {0, 0}, {0, 1}, {2, 0}, {3, 1} };
+
+	Enemy e;
+	e.position = data.playerPos;
+
+	glm::vec2 offset(2000, 0);
+	offset = glm::vec2(glm::vec4(offset, 0, 1) * glm::rotate(glm::mat4(1.f), glm::radians((float)(rand() % 360)), glm::vec3(0, 0, 1)));
+	e.position += offset;
+
+	e.speed = 350 + rand() % 100;
+	e.turnSpeed = 2.f + (rand() % 1000) / 500.f;
+	e.type = shipTypes[rand() % 4];
+	e.fireRange = 1.5 + (rand() % 1000) / 2000.f;
+	e.fireTimeReset = 0.1 + (rand() % 1000) / 500;
+	e.bulletSpeed = rand() % 3000 + 1000;
+	data.enemies.push_back(e);
 }
 
 
@@ -202,23 +226,73 @@ bool gameLogic(float deltaTime)
 
 		if (!data.bullets[i].isEnemy)
 		{
+			bool breakBothLoops = false;
 			for (int e = 0; e < data.enemies.size(); e++)
 			{
 				if (intersectBullet(data.bullets[i].position, data.enemies[e].position, enemyShipSize))
 				{
-					data.enemies.erase(data.enemies.begin() + e);
+					data.enemies[e].life -= .2;
+					if (data.enemies[e].life <= 0)
+					{
+						data.enemies.erase(data.enemies.begin() + e);
 						break;
+					}
+					data.bullets.erase(data.bullets.begin() + i);
+					i--;
+					breakBothLoops = true;
+					continue;
 				}
+			}
+
+			if (breakBothLoops)
+			{
+				continue;
+			}
+		}
+		else
+		{
+			if (intersectBullet(data.bullets[i].position, data.playerPos, shipSize))
+			{
+				data.health -= .1;
+
+				data.bullets.erase(data.bullets.begin() + i);
+				i--;
 			}
 		}
 
 		data.bullets[i].update(deltaTime);
 
 	}
+	if (data.health <= 0)
+	{
+		// kill player
+		restartGame();
+	}
+	else
+	{
+		data.health += deltaTime * 0.01;
+		data.health = glm::clamp(data.health, 0.f, 1.f);
+	}
 
 #pragma endregion
 
 #pragma region handle enemies
+
+	if (data.enemies.size() < 15)
+	{
+		data.spawnEnemyTimerSeconds -= deltaTime;
+
+		if (data.spawnEnemyTimerSeconds < 0)
+		{
+			data.spawnEnemyTimerSeconds = rand() % 5 + 1;
+
+			spawnEnemy();
+			if (rand() % 3 == 0)
+			{
+				spawnEnemy();
+			}
+		}
+	}
 
 	for (int i = 0; i < data.enemies.size(); i++)
 	{
@@ -234,6 +308,7 @@ bool gameLogic(float deltaTime)
 			Bullet b;
 			b.position = data.enemies[i].position;
 			b.fireDirection = data.enemies[i].viewDirection;
+			b.speed = data.enemies[i].bulletSpeed;
 			b.isEnemy = true;
 			// todo speed
 			data.bullets.push_back(b);
@@ -253,8 +328,6 @@ bool gameLogic(float deltaTime)
 #pragma endregion
 
 #pragma region render ship
-
-	constexpr float shipSize = 50.f;
 
 	renderSpaceShip(renderer, data.playerPos, shipSize, spaceShipTexture, spaceShipAtlas.get(3, 0), mouseDirection);
 
@@ -305,17 +378,7 @@ bool gameLogic(float deltaTime)
 
 	if (ImGui::Button("Spawn Enemy"))
 	{
-		glm::uvec2 shipTypes[] = { {0, 0}, {0, 1}, {2, 0}, {3, 1} };
-
-		Enemy e;
-		e.position = data.playerPos;
-
-		e.speed = 350 + rand() % 100;
-		e.turnSpeed = 2.f + (rand() % 1000) / 500.f;
-		e.type = shipTypes[rand() % 4];
-		e.fireRange = 1.5 + (rand() % 1000) / 2000.f;
-		e.fireTimeReset = 0.1 + (rand() % 1000) / 500;
-		data.enemies.push_back(e);
+		spawnEnemy();
 	}
 
 	if (ImGui::Button("Reset Game"))
