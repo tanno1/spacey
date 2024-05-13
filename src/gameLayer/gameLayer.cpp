@@ -16,6 +16,7 @@
 #include <enemy.h>
 #include <glui/glui.h>
 #include <raudio.h>
+#include <glui/glui.h>
 
 struct GameplayData
 {
@@ -47,12 +48,16 @@ gl2d::TextureAtlasPadding bulletsAtlas;
 gl2d::Texture healthBar;
 gl2d::Texture health;
 
+gl2d::Font font;
+
+glui::RendererUi uirenderer;
+
 Sound shootSound;
 
 gl2d::Texture backgroundTexture[BACKGROUNDS];
 TiledRenderer tiledRenderer[BACKGROUNDS];
 
-#pragma region usefulFunctions
+#pragma region Functions
 bool intersectBullet(glm::vec2 bulletPos, glm::vec2 shipPos, float shipSize)
 {
 	return glm::distance(bulletPos, shipPos) <= shipSize;
@@ -81,6 +86,8 @@ bool initGame()
 
 	shootSound = LoadSound(RESOURCES_PATH "shoot.flac");
 	/*SetSoundVolume(shootSound, .5);*/
+
+	font.createFromFile(RESOURCES_PATH "CommodorePixeled.ttf");
 
 	backgroundTexture[0].loadFromFile(RESOURCES_PATH "background1.png", true);
 	backgroundTexture[1].loadFromFile(RESOURCES_PATH "background2.png", true);
@@ -122,19 +129,11 @@ void spawnEnemy()
 }
 #pragma endregion
 
-bool gameLogic(float deltaTime)
+// hacky UI lol
+bool isInGame = 0;
+
+void gamePlay(float deltaTime, int w, int h)
 {
-#pragma region init stuff
-	int w = 0; int h = 0;
-	w = platform::getFrameBufferSizeX(); //window w
-	h = platform::getFrameBufferSizeY(); //window h
-	
-	glViewport(0, 0, w, h);
-	glClear(GL_COLOR_BUFFER_BIT); //clear screen
-
-	renderer.updateWindowMetrics(w, h);
-#pragma endregion
-
 #pragma region movement
 
 	glm::vec2 move = {};
@@ -178,7 +177,7 @@ bool gameLogic(float deltaTime)
 #pragma endregion
 
 #pragma region follow
-	
+
 	renderer.currentCamera.follow(data.playerPos, deltaTime * 500, 10, 200, w, h);
 
 #pragma endregion
@@ -275,7 +274,7 @@ bool gameLogic(float deltaTime)
 	if (data.health <= 0)
 	{
 		// kill player
-		restartGame();
+		isInGame = false;
 	}
 	else
 	{
@@ -319,7 +318,7 @@ bool gameLogic(float deltaTime)
 			b.fireDirection = data.enemies[i].viewDirection;
 			b.speed = data.enemies[i].bulletSpeed;
 			b.isEnemy = true;
-			
+
 			data.bullets.push_back(b);
 
 			if (!IsSoundPlaying(shootSound)) PlaySound(shootSound);
@@ -377,31 +376,68 @@ bool gameLogic(float deltaTime)
 
 #pragma endregion
 
-renderer.flush(); // tell gpu compute everything
+	renderer.flush(); // tell gpu compute everything
 
-#pragma region imGui
-	//ImGui::ShowDemoWindow();
-	ImGui::Begin("debug");
+}
 
-	ImGui::Text("Bullets Count: %d", (int)data.bullets.size());
-	ImGui::Text("Enemies Count: %d", (int)data.enemies.size());
+bool gameLogic(float deltaTime)
+{
+#pragma region init stuff
+	int w = 0; int h = 0;
+	w = platform::getFrameBufferSizeX(); //window w
+	h = platform::getFrameBufferSizeY(); //window h
+	
+	glViewport(0, 0, w, h);
+	glClear(GL_COLOR_BUFFER_BIT); //clear screen
 
-	if (ImGui::Button("Spawn Enemy"))
-	{
-		spawnEnemy();
-	}
-
-	if (ImGui::Button("Reset Game"))
-	{
-		restartGame();
-	}
-
-	if (ImGui::SliderFloat("Player Health", &data.health, 0, 1));
-
-	ImGui::End();
-
-	return true;
+	renderer.updateWindowMetrics(w, h);
 #pragma endregion
+
+	if (isInGame)
+	{
+		gamePlay(deltaTime, w, h);
+	}
+	else
+	{
+		uirenderer.Begin(1);
+
+		if (uirenderer.Button("start", Colors_White))
+		{
+			isInGame = true;
+			restartGame();
+		}
+
+		uirenderer.End();
+
+		uirenderer.renderFrame(renderer, font, platform::getRelMousePosition(), platform::isLMousePressed(), platform::isLMouseHeld(), platform::isLMouseReleased(), platform::Button::Escape, "", deltaTime);
+	}
+
+	renderer.flush(); // tell gpu compute everything
+
+//#pragma region imGui
+//	//ImGui::ShowDemoWindow();
+//	ImGui::Begin("debug");
+//
+//	ImGui::Text("Bullets Count: %d", (int)data.bullets.size());
+//	ImGui::Text("Enemies Count: %d", (int)data.enemies.size());
+//
+//	if (ImGui::Button("Spawn Enemy"))
+//	{
+//		spawnEnemy();
+//	}
+//
+//	if (ImGui::Button("Reset Game"))
+//	{
+//		restartGame();
+//	}
+//
+//	if (ImGui::SliderFloat("Player Health", &data.health, 0, 1));
+//
+//	ImGui::End();
+//
+//	return true;
+//#pragma endregion
+	return true;
 
 }
 
