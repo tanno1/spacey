@@ -15,6 +15,7 @@
 #include <vector>
 #include <enemy.h>
 #include <glui/glui.h>
+#include <raudio.h>
 
 struct GameplayData
 {
@@ -46,9 +47,12 @@ gl2d::TextureAtlasPadding bulletsAtlas;
 gl2d::Texture healthBar;
 gl2d::Texture health;
 
+Sound shootSound;
+
 gl2d::Texture backgroundTexture[BACKGROUNDS];
 TiledRenderer tiledRenderer[BACKGROUNDS];
 
+#pragma region usefulFunctions
 bool intersectBullet(glm::vec2 bulletPos, glm::vec2 shipPos, float shipSize)
 {
 	return glm::distance(bulletPos, shipPos) <= shipSize;
@@ -74,6 +78,9 @@ bool initGame()
 
 	healthBar.loadFromFile(RESOURCES_PATH "healthBar.png", true);
 	health.loadFromFile(RESOURCES_PATH "health.png", true);
+
+	shootSound = LoadSound(RESOURCES_PATH "shoot.flac");
+	/*SetSoundVolume(shootSound, .5);*/
 
 	backgroundTexture[0].loadFromFile(RESOURCES_PATH "background1.png", true);
 	backgroundTexture[1].loadFromFile(RESOURCES_PATH "background2.png", true);
@@ -113,7 +120,7 @@ void spawnEnemy()
 	e.bulletSpeed = rand() % 3000 + 1000;
 	data.enemies.push_back(e);
 }
-
+#pragma endregion
 
 bool gameLogic(float deltaTime)
 {
@@ -213,6 +220,8 @@ bool gameLogic(float deltaTime)
 		b.fireDirection = mouseDirection;
 
 		data.bullets.push_back(b);
+
+		PlaySound(shootSound);
 	}
 
 	for (int i = 0; i < data.bullets.size(); i++)
@@ -310,8 +319,10 @@ bool gameLogic(float deltaTime)
 			b.fireDirection = data.enemies[i].viewDirection;
 			b.speed = data.enemies[i].bulletSpeed;
 			b.isEnemy = true;
-			// todo speed
+			
 			data.bullets.push_back(b);
+
+			if (!IsSoundPlaying(shootSound)) PlaySound(shootSound);
 		}
 
 	}
@@ -366,10 +377,9 @@ bool gameLogic(float deltaTime)
 
 #pragma endregion
 
+renderer.flush(); // tell gpu compute everything
 
-
-	renderer.flush(); // tell gpu compute everything
-	
+#pragma region imGui
 	//ImGui::ShowDemoWindow();
 	ImGui::Begin("debug");
 
@@ -395,7 +405,6 @@ bool gameLogic(float deltaTime)
 
 }
 
-//This function might not be be called if the program is forced closed
 void closeGame()
 {
 
